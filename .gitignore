@@ -1,3 +1,7 @@
 .settings/
 .buildpath
 .project
+email_server_settings.php
+mysql_server_settings.php
+composer.phar
+vendor/
