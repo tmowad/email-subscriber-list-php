@@ -41,6 +41,26 @@
     die("Database connection fail");
   }
   
+  $matching_emails = mysqli_query($conn, "SELECT * FROM email_subscribers WHERE email = '{$email}';");
+  if (!$matching_emails) {
+    die("bad query...");
+  }
+  if ($matching_emails->num_rows > 0) {
+    ?>
+<form name="redirect_form" action="new_subscriber.php" method="post">
+  <input type="hidden" name="message" value="<?php echo "Email address {$email} is already in our database." ?>"></input>
+  <?php foreach ($_POST as $key => $val) { ?>
+  <input type="hidden" name="<?php echo $key; ?>" value="<?php echo $val; ?>"></input>
+  <?php } ?>
+</form>
+<script type="text/javascript">
+  document.redirect_form.submit();
+</script>
+    <?php 
+    die("This is bad, we have {$matching_emails->num_rows} matches.");
+  }
+  
+  
   // TODO: SQL injection potential here
   $result = mysqli_query($conn, "INSERT INTO email_subscribers (name, email, status) VALUES ('{$name}', '{$email}', 'UN');");
   if ($result) {
