@@ -1,4 +1,12 @@
+<div id="message" style="background-color: gray; color: pink;">
 <?php
+  echo $_POST["message"];
+?>
+</div>
+<br/>
+<?php
+  
+
   // TODO: seeing how I copied these 2 lines of mysql code from create_subscriber.php, it may be a good thing to 
   //        put into a separate .php file
   require 'mysql_server_settings.php';

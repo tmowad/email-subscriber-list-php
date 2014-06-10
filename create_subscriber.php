@@ -72,8 +72,17 @@
   if (!$mail->send()) {
     echo "Message could not be sent!";
     echo "Mailer error: " . $mail->ErrorInfo;
+    exit();
   } else {
     echo "Message has been sent.";
+?>
+<form name="redirect_form" action="list_subscribers.php" method="post">
+  <input type="hidden" name="message" value="<?php echo "User {$name} with email address {$email} has been added." ?>"></input>
+</form>
+<script type="text/javascript">
+  document.redirect_form.submit();
+</script>
+<?php 
   }
 ?>
 
