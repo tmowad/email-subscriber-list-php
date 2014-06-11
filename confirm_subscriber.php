@@ -1,4 +1,9 @@
 <?php
+  /**
+   * TODO: probably a useful level of abstraction would be to turn every SQL
+   * call into a PHP function that we stick into an included file, which will
+   * help make sure we can find all of our SQL-injection risks in one place.
+   */
   $confirm_key = isset($_GET["confirm_key"]) ? $_GET["confirm_key"] : "";
 
   if (empty($confirm_key)) {
@@ -7,7 +12,10 @@
 
     require 'mysql_server_settings.php';
     $conn = mysqli_connect("localhost", $mysql_username, $mysql_password, $mysql_database_name);
-    // TODO: more sql injection attack potential here...
+
+    // prevent SQL injection...
+    $confirm_key = mysqli_real_escape_string($conn, $confirm_key);
+
     $query = "SELECT * FROM unconfirmed_subscribers WHERE confirm_key = '{$confirm_key}';";
     $result = mysqli_query($conn, $query);
     
@@ -15,6 +23,12 @@
       $wont_work_reason = "Invalid key";
       $error_line = mysqli_error($conn) . ": (" . mysqli_errno($conn) . ")";
     } else if (mysqli_num_rows($result) == 0) {
+      /* TODO: To avoid this case from a double-click, we can pass in an 
+       * $_GET["email"] param, to look as a backup case in the 
+       * email_subscribers database table, and if there is a "CO" entry 
+       * for this email address, we can provide an alternate success 
+       * message.
+       */      
       $wont_work_reason = "No matching key";
       $error_line = "We are not finding a match for confirmation key {$confirm_key}.";
     } else if (mysqli_num_rows($result) > 1) {
@@ -22,7 +36,6 @@
       $wont_work_reason = "Duplicate key";
       $error_line = "Sorry, we seeing this confirmation key attached to multiple email submissions.  Please ensure you have clicked the correct confirmation link in your email.";
     } else {
-      // TODO: on matching, change the email_subscribers db status and DELETE the unconfirmed_subscriptions entry
       // This is the happy case, where we found one matching row.
       $matched_row = mysqli_fetch_assoc($result);
       $email_subscription_id = $matched_row["email_subscriber_id"];
@@ -30,7 +43,13 @@
       $update_result = mysqli_query($conn, "UPDATE email_subscribers SET status='CO' WHERE id={$email_subscription_id};");
       if (!$update_result) {
         $wont_work_reason = "Could not change subscriber status";
-        $error_line = mysqli_error($conn) . ": (" . mysqli_errno($conn) . ")<br/>";
+        $error_line = mysqli_error($conn) . ": (" . mysqli_errno($conn) . ")";
+      }
+      
+      $delete_result = mysqli_query($conn, "DELETE FROM unconfirmed_subscribers WHERE confirm_key = '{$confirm_key}';");
+      if (!$update_result) {
+        $wont_work_reason = "Could not delete unconfirmed_subscribers item.";
+        $error_line = mysqli_error($conn) . ": (" . mysqli_errno($conn) . ")";
       }
     }
   }
